@@ -153,8 +153,8 @@ void doThings(lua_State* L)
     lua_pushcfunction(L, function_character_health);
     lua_setfield(L, -2, "health");
 
-    // reset the stack (meta table is still in the stack)
-    lua_settop(L, 0);
+    // pop the meta table from the stack
+    lua_pop(L, 1);
 
     // create the 2 character
     Character attacker("Attacker", 3, 10);
