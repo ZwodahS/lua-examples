@@ -59,12 +59,9 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    int result = 0;
-    if(status == LUA_OK)
+    int result = lua_pcall(L, 0, LUA_MULTRET, 0);
+    if(result == LUA_OK)
     {
-        // load the script 
-        result = lua_pcall(L, 0, LUA_MULTRET, 0);
-
         // get the global function "add" and put it on the stack
         lua_getglobal(L, "add");
         // check if it is a function

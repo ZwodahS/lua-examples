@@ -35,10 +35,9 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    int result = 0;
-    if(status == LUA_OK)
+    int result = lua_pcall(L, 0, LUA_MULTRET, 0);
+    if(result == LUA_OK)
     {
-        result = lua_pcall(L, 0, LUA_MULTRET, 0);
     }
     else
     {
