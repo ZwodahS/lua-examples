@@ -35,7 +35,20 @@ public:
     {
         return damage;
     }
+
+    std::string toString()
+    {
+        return name + ": [Damage : " + std::to_string(damage) + "][Health : " + std::to_string(health) + "]";
+    }
 };
+
+void putCharacter(lua_State* L, Character& character)
+{
+    Character** userdata = static_cast<Character**>(lua_newuserdata(L, sizeof(Character*)));
+    *userdata = &character;
+    // set the attacker metatable
+    luaL_setmetatable(L, "CharacterMT");
+}
 
 /**
  * Calling a function in Lua from CPP.
@@ -62,15 +75,9 @@ public:
         if(type == LUA_TFUNCTION)
         {
             // create a new user data on the stack, and assign the attacker pointer to it
-            Character** attackerUd = static_cast<Character**>(lua_newuserdata(L, sizeof(Character*)));
-            *attackerUd = &attacker;
-            // set the attacker metatable
-            luaL_setmetatable(L, "CharacterMT");
+            putCharacter(L, attacker);
             // create a new user data on the stack, and assign the defender pointer to it
-            Character** defenderUd = static_cast<Character**>(lua_newuserdata(L, sizeof(Character*)));
-            *defenderUd = &defender;
-            // set the defender metatable
-            luaL_setmetatable(L, "CharacterMT");
+            putCharacter(L, defender);
             // call the function
             lua_call(L, 2, 0);
             // shouldn't have anything to pop
@@ -106,6 +113,26 @@ extern "C"
         (**character).dealtDamage(damage);
         return 0; // the number of values we put into the lua stack. Not the return value
     }
+
+    static int function_character_health(lua_State* L)
+    {
+        int args = lua_gettop(L);
+        if(args == 1) // if there are no argument other than self, we will just return the health value
+        {
+            Character ** character = static_cast<Character**>(luaL_checkudata(L, 1, "CharacterMT"));
+            int health = (**character).health;
+            lua_pushnumber(L, health);
+            return 1;
+        }
+        else // else, we will set the value to the first argument after "self"
+        {
+            Character ** character = static_cast<Character**>(luaL_checkudata(L, 1, "CharacterMT"));
+            int health = luaL_checkint(L, 2);
+            (**character).health = health;
+            lua_pushnumber(L, health);
+            return 1;
+        }
+    }
 }
 
 void doThings(lua_State* L)
@@ -122,6 +149,9 @@ void doThings(lua_State* L)
     // set the dealt damage function
     lua_pushcfunction(L, function_character_dealtDamage);
     lua_setfield(L, -2, "dealtDamage");
+
+    lua_pushcfunction(L, function_character_health);
+    lua_setfield(L, -2, "health");
 
     // reset the stack (meta table is still in the stack)
     lua_settop(L, 0);
@@ -185,6 +215,12 @@ int main(int argc, char* argv[])
     }
 
     doThings(L);
+
+    lua_getglobal(L, "testcharacter");
+    Character character("name", 3, 20);
+    putCharacter(L, character);
+    lua_call(L, 1, 0);
+    std::cout << character.toString() << std::endl;
 
     lua_close(L);
     return 0;

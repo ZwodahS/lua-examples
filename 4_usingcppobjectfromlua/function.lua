@@ -8,6 +8,9 @@ function applyDamage(attacker, target)
     print("[Lua] Damage dealt");
 end
 
-function printDamage()
-    print(damage)
+function testcharacter(character)
+    local health = character:health();
+    print("[Lua] Before setting health value  " .. health);
+    local newhealth = character:health(3);
+    print("[Lua] After setting health value  " .. newhealth);
 end
